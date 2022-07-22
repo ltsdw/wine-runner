@@ -1,0 +1,8 @@
+#! /bin/env python
+
+from sys import argv
+from Utils import AppsManager
+
+if __name__ == "__main__":
+    AppsManager(_argv = argv)
+
