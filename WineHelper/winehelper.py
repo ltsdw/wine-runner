@@ -97,7 +97,7 @@ class WineHelper:
                     
                 if _stdout:
                     for l in _stdout:
-                        print(l)
+                        print(l, end="")
 
 
     def _winePathCommand(self, cmd: str) -> str:

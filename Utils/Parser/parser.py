@@ -142,7 +142,7 @@ class Parser:
                     try:
                         show_logs = (
                             app_data["debug"]
-                            if isinstance(app_data["debug"], bool) and app_data["debug"]
+                            if isinstance(app_data["debug"], bool)
                             else True
                         )
                     except KeyError:
