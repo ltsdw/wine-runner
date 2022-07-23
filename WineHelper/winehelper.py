@@ -11,8 +11,6 @@ class WineHelper:
         wine_path: str,
         app_dir: str,
         envars: Dict[str, str] | None = None,
-        cache_dir: str | None = None,
-        dxvk_cache_dir: str | None = None,
         show_logs: bool = False,
         logs_filepath: str | None = None
     ):
@@ -22,8 +20,6 @@ class WineHelper:
         :wine_path: path to wine's bin directory.
         :app_dir: path to where the application's prefix will be created.
         :envars: the environment variables to be used within wine's context.
-        :cache_dir: path to cache mesa shader.
-        :dxvk_cache_dir: path to cache dxvk pipeline state.
         :show_logs: tell whether should display logs.
         :logs_filepath: if present logs will be saved to this file.
         :return:
@@ -37,11 +33,6 @@ class WineHelper:
         self._show_logs: bool           = show_logs
         self._logs_filepath: str | None = logs_filepath
 
-        if cache_dir:
-            environ["MESA_SHADER_CACHE_DIR"] = cache_dir
-
-        if dxvk_cache_dir:
-            environ["DXVK_STATE_CACHE_PATH"] = dxvk_cache_dir
 
         if path.exists(self._wine_bin):
             environ["PATH"] += ":" + self._wine_path
@@ -114,7 +105,7 @@ class WineHelper:
             close_fds = True
         ) as p:
             _stdout: IO[str] | None = p.stdout
- 
+                
             if _stdout:
                 for l in _stdout:
                     print(l, end = "")

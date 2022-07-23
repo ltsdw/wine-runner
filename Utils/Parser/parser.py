@@ -92,7 +92,7 @@ class Parser:
 
                     try:
                         envars = (
-                            app_data["envars"]
+                            self._parseDictionaryLike(app_data["envars"])
                             if isinstance(app_data["envars"], dict) and app_data["envars"]
                             else None
                         )
@@ -100,36 +100,12 @@ class Parser:
                         envars = None
 
 
-                    cache_dir: str | None
-
-                    try:
-                        cache_dir = (
-                            path.expandvars(app_data["cache_dir"])
-                            if isinstance(app_data["cache_dir"], str) and app_data["cache_dir"]
-                            else None
-                        )
-                    except KeyError:
-                        cache_dir = None
-
-
-                    dxvk_cache_dir: str | None
-
-                    try:
-                        dxvk_cache_dir = (
-                            path.expandvars(app_data["dxvk_cache_dir"])
-                            if isinstance(app_data["dxvk_cache_dir"], str) and app_data["dxvk_cache_dir"]
-                            else None
-                        )
-                    except KeyError:
-                        dxvk_cache_dir = None
-
-
                     executables: Dict[str, str] | None
 
                     try: 
 
                         executables = (
-                            app_data["executables"]
+                            self._parseDictionaryLike(app_data["executables"])
                             if isinstance(app_data["executables"], dict) and app_data["executables"]
                             else None
                         )
@@ -167,8 +143,6 @@ class Parser:
                         app_dir         = app_dir,
                         exe_dir         = exe_dir,
                         envars          = envars,
-                        cache_dir       = cache_dir,
-                        dxvk_cache_dir  = dxvk_cache_dir,
                         executables     = executables,
                         show_logs       = show_logs,
                         logs_filepath   = logs_filepath
@@ -177,4 +151,21 @@ class Parser:
                     apps_list.append(app)
 
         return apps_list
+
+    @staticmethod
+    def _parseDictionaryLike(_dict: Dict[str, str]) -> Dict[str, str]:
+        """
+        Expands environment variables if any.
+
+        :_dict: dictionary.
+        :return: the dictionary with expanded environment variables.
+        """
+
+
+        new_dict: Dict[str, str] = {}
+
+        for k, v in _dict.items():
+            new_dict[k] = path.expandvars(v)
+
+        return new_dict
 
