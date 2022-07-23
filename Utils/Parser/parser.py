@@ -152,6 +152,7 @@ class Parser:
 
         return apps_list
 
+
     @staticmethod
     def _parseDictionaryLike(_dict: Dict[str, str]) -> Dict[str, str]:
         """
