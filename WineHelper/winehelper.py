@@ -86,18 +86,31 @@ class WineHelper:
 
         if logs_filepath:
             with open(logs_filepath, 'w') as f:
-                with Popen(cmd, stdout=f, stderr=STDOUT, bufsize=0, universal_newlines=True) as _:
-                    pass
+                Popen(
+                    cmd,
+                    stdout = f,
+                    stderr = STDOUT,
+                    bufsize = -1,
+                    universal_newlines = True,
+                    close_fds = True
+                )
         else:
+            if not show_logs:
+                Popen(cmd, close_fds = True)
 
-            stream: int = PIPE if show_logs else DEVNULL
-
-            with Popen(cmd, stdout=stream, stderr=STDOUT, universal_newlines=True) as p:
+            with Popen(
+                cmd,
+                stdout = PIPE,
+                stderr = STDOUT,
+                bufsize = -1,
+                universal_newlines = True,
+                close_fds = True
+            ) as p:
                 _stdout: IO[str] | None = p.stdout
                     
                 if _stdout:
                     for l in _stdout:
-                        print(l, end="")
+                        print(l, end = "")
 
 
     def _winePathCommand(self, cmd: str) -> str:
