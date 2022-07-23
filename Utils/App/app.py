@@ -40,15 +40,6 @@ class App(WineHelper):
         self._show_logs: bool                   = show_logs
         self._logs_filepath: str | None         = logs_filepath
 
-        if self._exe_dir:
-            if path.exists(self._exe_dir):
-                chdir(self._exe_dir)
-            else:
-                self._exe_dir = path.join(app_dir, "pfx", self._exe_dir)
-
-                if path.exists(self._exe_dir):
-                    chdir(self._exe_dir)
-
 
     def runExe(self, exe: str) -> None:
         """
@@ -88,6 +79,16 @@ class App(WineHelper):
 
         :return:
         """
+
+
+        if self._exe_dir:
+            if path.exists(self._exe_dir):
+                chdir(self._exe_dir)
+            else:
+                self._exe_dir = path.join(self._app_dir, "pfx", self._exe_dir)
+
+                if path.exists(self._exe_dir):
+                    chdir(self._exe_dir)
 
 
         super().__init__(
