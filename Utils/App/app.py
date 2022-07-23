@@ -39,10 +39,16 @@ class App(WineHelper):
         self._executables: Dict[str, str] | None= executables
         self._show_logs: bool                   = show_logs
         self._logs_filepath: str | None         = logs_filepath
+        self._exe_dir: str | None               = exe_dir
 
+        if self._exe_dir:
+            if path.exists(self._exe_dir):
+                chdir(self._exe_dir)
+            else:
+                self._exe_dir = path.join(app_dir, "pfx", self._exe_dir)
 
-        if exe_dir and path.exists(exe_dir):
-            chdir(exe_dir)
+                if path.exists(self._exe_dir):
+                    chdir(self._exe_dir)
 
 
         super().__init__(
@@ -73,7 +79,7 @@ class App(WineHelper):
 
                         return
 
-        die(f"Executable not found: {exe}")
+        die(f"Executable for {exe} not found at: {self._exe_dir}")
 
 
     def getId(self) -> str:
