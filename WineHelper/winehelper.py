@@ -105,7 +105,7 @@ class WineHelper:
             close_fds = True
         ) as p:
             _stdout: IO[str] | None = p.stdout
-                
+
             if _stdout:
                 for l in _stdout:
                     print(l, end = "")
