@@ -107,8 +107,11 @@ class AppsManager:
         :return: the Application if found, or exit otherwise.
         """
 
+
         for _app in Parser().createModels():
             if _app.getId() == self.id:
+                _app.createApp()
+
                 return _app
 
         die(f"Application not found: {self.id}")

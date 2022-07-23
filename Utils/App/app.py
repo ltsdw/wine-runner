@@ -36,10 +36,15 @@ class App(WineHelper):
     ):
 
         self._id: str                           = _id
+        self._wine_path: str                    = wine_path
+        self._app_dir: str                      = app_dir
+        self._exe_dir: str | None               = exe_dir
+        self._envars: Dict[str, str] | None     = envars
+        self._cache_dir: str | None             = cache_dir
+        self._dxvk_cache_dir: str | None        = dxvk_cache_dir
         self._executables: Dict[str, str] | None= executables
         self._show_logs: bool                   = show_logs
         self._logs_filepath: str | None         = logs_filepath
-        self._exe_dir: str | None               = exe_dir
 
         if self._exe_dir:
             if path.exists(self._exe_dir):
@@ -49,17 +54,6 @@ class App(WineHelper):
 
                 if path.exists(self._exe_dir):
                     chdir(self._exe_dir)
-
-
-        super().__init__(
-            wine_path       = wine_path,
-            app_dir         = app_dir,
-            envars          = envars,
-            cache_dir       = cache_dir,
-            dxvk_cache_dir  = dxvk_cache_dir,
-            show_logs       = show_logs,
-            logs_filepath   = logs_filepath
-        )
 
 
     def runExe(self, exe: str) -> None:
@@ -91,4 +85,24 @@ class App(WineHelper):
 
 
         return self._id
+
+
+    def createApp(self) -> None:
+        """
+        Initiates the WineHelper object.
+        This function must always be called after creating the App object.
+
+        :return:
+        """
+
+
+        super().__init__(
+            wine_path       = self._wine_path,
+            app_dir         = self._app_dir,
+            envars          = self._envars,
+            cache_dir       = self._cache_dir,
+            dxvk_cache_dir  = self._dxvk_cache_dir,
+            show_logs       = self._show_logs,
+            logs_filepath   = self._logs_filepath
+        )
 
