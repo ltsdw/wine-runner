@@ -41,17 +41,22 @@ class App(WineHelper):
         self._logs_filepath: str | None         = logs_filepath
 
 
-    def runExe(self, exe: str) -> None:
+    def runExe(self, exe: str | None = None) -> None:
         """
         Runs the app.
 
-        :exe: the executable to be run.
+        :exe: the executable to be run, if not specified runs the first executable it finds.
         :return:
         """
 
 
         if self._executables:
             for k, v in self._executables.items():
+                if not exe:
+                    self.wine([v])
+
+                    return
+
                 if k == exe or v == exe:
                     if path.exists(v):
                         self.wine([v])

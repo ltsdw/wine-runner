@@ -94,9 +94,7 @@ class AppsManager(Parser):
             self.app.removePrefix()
         else:
             if (self.verb == "run" or not self.verb):
-                self.app.runExe("app_exe")
-            else:
-                self.app.runExe(self.verb)
+                self.app.runExe()
 
 
     def _getApp(self) -> App:
