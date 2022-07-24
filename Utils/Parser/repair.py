@@ -46,11 +46,11 @@ class Repair:
         }
 
 
-        self._second_dir: str = path.join(path.dirname(__file__), "../../")
+        self._second_dir: str = path.abspath(path.join(path.dirname(__file__), "../../"))
         snd_example_json_path: str
 
 
-        if not path.exists(path.join(self._second_dir, "wine")):
+        if not path.exists(path.join(self._second_dir, "wrunner")):
             die(f"Not the root of wine-runner directory: {self._second_dir}")
 
         self._second_apps_dir: str = path.join(self._second_dir, "MyApps")
