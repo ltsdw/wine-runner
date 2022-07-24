@@ -27,9 +27,9 @@ class AppsManager(Parser):
 
 
         try:
-            self.exe_args: List[str] | None = _argv[3:]
+            self.args: List[str] | None = _argv[3:]
         except IndexError:
-            self.exe_args = None
+            self.args = None
 
 
         self.app: App = self._getApp()
@@ -44,7 +44,7 @@ class AppsManager(Parser):
         ):
             self.app.winecfg()
         elif self.verb == "winetricks" or self.verb == "wt":
-            self.app.winetricks(self.exe_args)
+            self.app.winetricks(self.args)
         elif (
             self.verb == "dxvk"
             or self.verb == "install_dxvk"
@@ -86,7 +86,7 @@ class AppsManager(Parser):
             self.app.removePrefix()
         else:
             if self.verb:
-                self.app.runExe(self.verb)
+                self.app.runExe(self.verb, self.args)
             else:
                 self.app.runExe()
 
@@ -95,7 +95,7 @@ class AppsManager(Parser):
         """
         Searchs for the app.
 
-        :return: the Application if found, or exit otherwise.
+        :return: Return the Application if found, or exit otherwise.
         """
 
 
@@ -105,5 +105,5 @@ class AppsManager(Parser):
 
                 return _app
 
-        die(f"Application not found: {self.id}")
+        die(f"Application for id {self.id} not found.")
 

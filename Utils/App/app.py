@@ -1,5 +1,5 @@
 from os import path, chdir
-from typing import Dict
+from typing import Dict, List
 from Utils.Funcs import die
 from WineHelper import WineHelper
 
@@ -41,25 +41,28 @@ class App(WineHelper):
         self._logs_filepath: str | None         = logs_filepath
 
 
-    def runExe(self, exe: str | None = None) -> None:
+    def runExe(self, exe: str | None = None, args: List[str] | None = None) -> None:
         """
         Runs the app.
 
         :exe: the executable to be run, if not specified runs the first executable it finds.
+        :args: list of arguments.
         :return:
         """
 
 
+        _args: List[str] = args if args else []
+
         if self._executables:
             for k, v in self._executables.items():
                 if not exe:
-                    self.wine([v])
+                    self.wine([v] + _args)
 
                     return
 
                 if k == exe or v == exe:
                     if path.exists(v):
-                        self.wine([v])
+                        self.wine([v] + _args)
 
                         return
 
