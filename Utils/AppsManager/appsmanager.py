@@ -38,14 +38,6 @@ class AppsManager(Parser):
         if self.verb == "--init" or self.verb == "init":
             self.app.initWinePrefix()
         elif (
-            self.verb == "install"
-            or self.verb == "installer"
-            or self.verb == "installer_exe"
-        ):
-            self.app.runExe("installer_exe")
-        elif self.verb == "launcher" or self.verb == "patcher":
-            self.app.runExe("launcher_exe")
-        elif (
             self.verb == "winecfg"
             or self.verb == "config"
             or self.verb == "cfg"
@@ -93,7 +85,9 @@ class AppsManager(Parser):
         ):
             self.app.removePrefix()
         else:
-            if (self.verb == "run" or not self.verb):
+            if self.verb:
+                self.app.runExe(self.verb)
+            else:
                 self.app.runExe()
 
 
