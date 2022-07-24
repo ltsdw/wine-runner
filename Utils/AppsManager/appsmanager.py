@@ -1,18 +1,17 @@
 from typing import List
 from Utils.Funcs import die
-from Utils.Parser import Parser, Repair
+from Utils.Parser import Parser
 from Utils.App import App
 
 
-class AppsManager:
+class AppsManager(Parser):
     def __init__(self, _argv: List[str]):
         """
         Parse the arguments.
         """
 
 
-        # Repair MyApps directory
-        Repair()
+        super().__init__()
 
 
         try:
@@ -108,7 +107,7 @@ class AppsManager:
         """
 
 
-        for _app in Parser().createModels():
+        for _app in self.createModels():
             if _app.getId() == self.id:
                 _app.createApp()
 
