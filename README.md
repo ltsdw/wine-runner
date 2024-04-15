@@ -1,3 +1,7 @@
+# **Wine-Runner**
+
+Command line wrapper around [WINE](https://www.winehq.org/) and [UMU](https://github.com/Open-Wine-Components/umu-launcher) for running Windows applications.
+
 # **Usage**
 
 Create a configuration file for the application at the wine-runner configuration directory (usually at **$HOME/.config/wine-runner/profiles**, can be changed to somewhere else by specifying the **WRUNNER_CONFIG_DIR** environment variable).
@@ -9,7 +13,7 @@ Configuration file example:
 
 [profile]
 profile_id = "example"
-wine_directory_ = "$HOME/.local/opt/wine-tkg-valve-exp-bleeding/usr/bin"
+wine_directory = "$HOME/.local/opt/wine-tkg-valve-exp-bleeding/usr/bin"
 application_directory = "$XDG_DATA_HOME/Games/example"
 
 [profile.environment_variables]
