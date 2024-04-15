@@ -221,10 +221,11 @@ class Parser(Repair):
         :return:
         """
 
+        profiles_directory: str = self.getProfilesPath()
         files: Generator[str, None, None] = (
-            path.join(d, f) for d in self.getProfilesPath()
-            for f in listdir(d)
-            if path.isfile(path.join(d, f))
+            path.join(profiles_directory, f)
+            for f in listdir(profiles_directory)
+            if path.isfile(path.join(profiles_directory, f))
         )
 
         for file_path in files:

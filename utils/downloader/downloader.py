@@ -1,5 +1,6 @@
 from os import environ, makedirs, chdir, path
 from urllib.request import Request, urlopen
+from http.client import HTTPResponse
 from typing import Any, Dict, List
 from email.message import Message
 from tarfile import open as topen
@@ -42,14 +43,16 @@ class Downloader:
         self._request: Request = Request(self._url, headers=headers)
 
         try:
-            self._response: Any = urlopen(self._request, timeout=30)
+            self._response: HTTPResponse = urlopen(self._request, timeout=30)
         except Exception as e:
             die(f"Failed to make a request to the url: {url}.\nError: {e}")
 
         if self._response.getcode() != 200: die("Failed to fetch download information.")
 
+        content_dispositon: str | None = self._response.headers["Content-Disposition"]
+        content_dispositon = content_dispositon if content_dispositon else 'Content-Disposition: attachment; filename=unknown.tar.gz'
         msg: Message = Message()
-        msg.add_header("Content-Disposition", self._response.headers["Content-Disposition"])
+        msg.add_header("Content-Disposition", content_dispositon)
         _filename: str | None = msg.get_filename()
         self._filename: str = _filename if _filename else die("Couldn't retrieve filename!")
         self._filepath: str = path.join(self._download_directory, self._filename)
@@ -64,7 +67,9 @@ class Downloader:
         :return:
         """
 
-        return int(self._response.headers["Content-Length"]) if self._response.headers.get("Content-Length") else None
+        content_length: str | None = self._response.headers["Content-Length"]
+
+        return int(content_length) if content_length else None
 
 
     def download(self) -> None:
