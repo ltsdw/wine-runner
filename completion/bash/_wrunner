@@ -1,0 +1,121 @@
+#! /usr/bin/env bash
+
+_find()
+{
+    local key=${1}
+    shift
+    local -a array=($@)
+
+    for i in ${!array[@]}; do
+        if [[ ${array[${i}]} == ${key} ]]; then
+            echo ${i}
+            return 0
+        fi
+    done
+
+    echo ${#array[@]}
+    return 1
+}
+
+_prevWordIsInModes()
+{
+    local modes=("--run" "--runinprefix" "--waitforexitandrun")
+
+    if [[ $(_find ${COMP_WORDS[COMP_CWORD - 1]} ${modes[@]}) -lt ${#modes[@]} ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+_isVerbProvided()
+{
+    local -a verbs
+    readarray -t verbs < <(wrunner --show-verbs | cut -d ':' -f 1)
+
+    for word in ${COMP_WORDS[@]}; do
+        if [[ $(_find ${word} ${verbs[@]}) -lt ${#verbs[@]} ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+_isOptProvided()
+{
+    local -a opts_args
+    readarray -t opts_args < <(wrunner --show-optional-args | cut -d ':' -f 1)
+
+    if [[ $(_find "--use-umu" "${COMP_WORDS[@]}") -lt ${#COMP_WORDS[@]} ||
+    $(_find "--use-wine" "${COMP_WORDS[@]}") -lt ${#COMP_WORDS[@]} ]]; then
+        unset opts_args[$(_find "--use-umu" ${opts_args[@]})]
+        unset opts_args[$(_find "--use-wine" ${opts_args[@]})]
+    fi
+
+    for word in ${COMP_WORDS[@]}; do
+        if [[ $(_find ${word} ${opts_args[@]}) -lt ${#opts_args[@]} ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+_doIDS()
+{
+    local -a ids
+    readarray -t -d ' ' ids < <(wrunner --show-ids)
+    COMPREPLY=($(compgen -W "${ids[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
+_doOpt()
+{
+    local -a opts_args
+    readarray -t opts_args < <(wrunner --show-optional-args | cut -d ":" -f 1)
+    opts_args+=($@)
+
+    if [[ $(_find "--use-umu" "${COMP_WORDS[@]}") -lt ${#COMP_WORDS[@]} ||
+    $(_find "--use-wine" "${COMP_WORDS[@]}") -lt ${#COMP_WORDS[@]} ]]; then
+        unset opts_args[$(_find "--use-umu" ${opts_args[@]})]
+        unset opts_args[$(_find "--use-wine" ${opts_args[@]})]
+    fi
+
+    COMPREPLY=($(compgen -W "${opts_args[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
+_doVerbs()
+{
+    local -a verbs
+    readarray -t verbs < <(wrunner --show-verbs | cut -d ':' -f 1)
+    _doOpt ${verbs[@]}
+}
+
+_doAliases()
+{
+    local aliases profile_id
+
+    profile_id=${COMP_WORDS[1]}
+    readarray -t aliases < <(wrunner ${profile_id} --list-aliases | cut -d ":" -f 1)
+
+    COMPREPLY=($(compgen -W "${aliases[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
+_wrunner()
+{
+    if [[ ${#COMP_WORDS[@]} -gt 5 ]] || _isVerbProvided; then
+        return 0
+    fi
+
+    if [[ ${#COMP_WORDS[@]} -eq 2 ]]; then
+        _doIDS
+    elif [[ ${#COMP_WORDS[@]} -eq 3 && ${COMP_WORDS[COMP_CWORD]} != -* ]]; then
+        _doVerbs
+    elif [[ ${#COMP_WORDS[@]} -ge 3 ]] && ! _isOptProvided; then
+        _doOpt
+    elif [[ ${#COMP_WORDS[@]} -ge 4 ]] && _prevWordIsInModes; then
+        _doAliases
+    fi
+}
+
+complete -F _wrunner wrunner

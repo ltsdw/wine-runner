@@ -1,8 +1,7 @@
 #! /bin/env python
 
-from sys import argv
-from Utils import AppsManager
+from utils import ProfilesManager
 
 if __name__ == "__main__":
-    AppsManager(_argv = argv)
+    ProfilesManager()
 

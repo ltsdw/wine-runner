@@ -1,0 +1,96 @@
+#compdef _wrunner wrunner
+
+_prevWordIsInModes()
+{
+    local modes=("--run" "--runinprefix" "--waitforexitandrun")
+
+    if [[ ${modes[(ie)${words[CURRENT-1]}]} -le ${#modes} ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+_isVerbProvided()
+{
+    IFS=$'\n' local -a verbs=($(wrunner --show-verbs | cut -d ':' -f 1))
+
+    for word in ${words[@]}; do
+        if [[ ${verbs[(ie)${word}]} -le ${#verbs} ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+_isOptProvided()
+{
+    IFS=$'\n' local -a opts_args=($(wrunner --show-optional-args | cut -d ':' -f 1))
+    local -a exclude=("--use-umu" "--use-wine")
+
+    for e in ${exclude[@]}; do
+        opts_args[${opts_args[(i)${e}]}]=()
+    done
+
+    for word in ${words[@]}; do
+        if [[ ${opts_args[(ie)${word}]} -le ${#opts_args} ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+_doIDS()
+{
+    IFS=' ' local -a ids=($(wrunner --show-ids))
+    _alternative "ids:profile's ids:(${ids})"
+}
+
+_doOpt()
+{
+    IFS=$'\n' local -a opts_args=($(wrunner --show-optional-args))
+    opts_args+=($@)
+
+    if [[ ${words[(i)*--use-umu*]} -le ${#words} ]]; then
+        opts_args[${opts_args[(i)*--use-umu*]}]=()
+        opts_args[${opts_args[(i)*--use-wine*]}]=()
+    fi
+
+    if [[ ${words[(i)*--use-wine*]} -le ${#words} ]]; then
+        opts_args[${opts_args[(i)*--use-umu*]}]=()
+        opts_args[${opts_args[(i)*--use-wine*]}]=()
+    fi
+
+    _describe "wrunner" opts_args
+}
+
+_doVerbs()
+{
+    IFS=$'\n' local -a verbs=($(wrunner --show-verbs))
+    _doOpt ${verbs[@]}
+}
+
+_doAliases()
+{
+    local profile_id=${words[2]}
+    IFS=$'\n' local -a aliases=($(wrunner ${profile_id} --list-aliases))
+    _describe "wrunner" aliases
+}
+
+_wrunner() {
+    if [[ $CURRENT -gt 5 ]] || _isVerbProvided; then
+        return
+    fi
+
+    if [[ $CURRENT -eq 2 ]]; then
+        _doIDS
+    elif [[ $CURRENT -eq 3 && ${words[CURRENT]} != -* ]]; then
+        _doVerbs
+    elif [[ $CURRENT -ge 3 ]] && ! _isOptProvided; then
+        _doOpt
+    elif [[ $CURRENT -ge 4 ]] && _prevWordIsInModes; then
+        _doAliases
+    fi
+}
