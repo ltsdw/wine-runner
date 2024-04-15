@@ -20,6 +20,16 @@ WINEFSYNC = "1"
 launcher = "$XDG_DATA_HOME/Games/example/pfx/drive_c/Program Files (x86)/Launcher/Launcher.exe"
 ```
 
+**Add Wine-Runner to the PATH environment variable**
+
+Autocomplete and whatnot depends on being able to find the **wrunner** command, in other words wine-runner directory must be reachable from the **PATH** environment variable (change the path accordingly):
+
+```sh
+export PATH="$PATH:$HOME/.local/opt/wine-runner"
+```
+
+Add it to the .bashrc, .zshrc, etc to make it automatically sourced at startup.
+
 **Wine-Runner's syntax**
 
 The syntax for running it usually goes like:
