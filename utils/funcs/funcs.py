@@ -124,7 +124,7 @@ def findFiles(path: str, patterns: List[str]) -> Generator[str, None, None]:
             if entry.is_dir(): yield from findFiles(entry.path, patterns)
             if entry.is_file() and entry.name in patterns: yield entry.path
     except PermissionError:
-        die(f"Permission denied cannot access: {path}")
+        _print(f"{findFiles.__name__}: Permission denied cannot access '{path}', ignoring.")
 
 
 def removeExtentions(filename: str, n_times: int = 1) -> str:
