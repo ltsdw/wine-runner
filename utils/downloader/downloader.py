@@ -50,7 +50,7 @@ class Downloader:
         if self._response.getcode() != 200: die("Failed to fetch download information.")
 
         content_dispositon: str | None = self._response.headers["Content-Disposition"]
-        content_dispositon = content_dispositon if content_dispositon else 'Content-Disposition: attachment; filename=unknown.tar.gz'
+        content_dispositon = content_dispositon if content_dispositon else die("Couldn't retrieve filename!")
         msg: Message = Message()
         msg.add_header("Content-Disposition", content_dispositon)
         _filename: str | None = msg.get_filename()
