@@ -58,18 +58,18 @@ class Downloader:
         self._filepath: str = path.join(self._download_directory, self._filename)
 
 
-    def getFileSize(self) -> int | None:
+    def getFileSize(self) -> float | None:
         """
         getFileSize
 
         Checks the size of the file.
 
-        :return:
+        :return: The file size.
         """
 
         content_length: str | None = self._response.headers["Content-Length"]
 
-        return int(content_length) if content_length else None
+        return float(content_length) if content_length else None
 
 
     def download(self) -> None:
@@ -85,10 +85,28 @@ class Downloader:
 
         _print(f"Downloading {self._filename}")
 
-        with open(self._filepath, "wb") as f:
-            f.write(self._response.read())
+        CHUNK_SIZE: int = 4096
 
-        _print(f"Download complete.")
+        with open(self._filepath, "wb") as f:
+            file_size: float | None = self.getFileSize()
+            bytes_download: int = 0
+            msg: str = ""
+
+            while chunk := self._response.read(CHUNK_SIZE):
+                if not chunk: break
+
+                f.write(chunk)
+
+                if not file_size: continue
+
+                bytes_download += len(chunk)
+                progress: float = round(bytes_download * 100 / file_size, 1)
+
+                msg = f"\rDownloading: {progress}%"
+                _print(msg, end = "")
+
+        _print("\r" + " " * len(msg), end="")
+        _print(f"\rDownload complete.")
 
 
     @staticmethod
