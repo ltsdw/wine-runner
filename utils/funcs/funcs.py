@@ -1,6 +1,6 @@
 from typing import Any, Callable, Dict, List, Generator, NoReturn, TextIO, Union
 from sys import stderr, stdout
-from os import path, scandir
+from os import environ, path, scandir
 from tarfile import TarInfo
 from utils.basichtmlparser import BasicHtmlParser
 from urllib.request import Request, urlopen
@@ -202,4 +202,23 @@ def getPackageUrl(url: str) -> str:
         relative_url: str = parser.get_attribute()
 
         return "https://github.com/" + relative_url if relative_url else relative_url
+
+
+def restoreEnvar(name: str, value: str | None) -> None:
+    """
+    restoreEnvar
+
+    Restore the value of the environment variable or pop it from the environ object.
+
+    :name: Name of the environment variable.
+    :value: Original value of the environment variable.
+    :return:
+    """
+
+    if not value:
+        environ.pop(name, None)
+
+        return
+
+    environ[name] = value
 

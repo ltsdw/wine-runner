@@ -3,7 +3,7 @@ from subprocess import Popen, PIPE, DEVNULL, STDOUT, run
 from shutil import rmtree
 from os import environ, path, chdir, mkdir
 from typing import List, Dict, IO, Callable, Optional, NoReturn
-from utils.funcs import die, negate, _print
+from utils.funcs import die, negate, _print, restoreEnvar
 
 
 class BaseHandler(ABC):
@@ -202,10 +202,13 @@ class BaseHandler(ABC):
         """
 
         fd: int = PIPE if debug else DEVNULL
-        environ["LC_ALL"] = "en_US.UTF-8"
+        lc_all: str | None = environ.get("LC_ALL")
+        environ["LC_ALL"] = "C"
 
         if not debug:
             Popen(cmd, stdout = fd, stderr = STDOUT)
+
+            restoreEnvar("LC_ALL", lc_all)
 
             return
 
@@ -219,6 +222,8 @@ class BaseHandler(ABC):
                     encoding="utf-8"
                 ) as p: pass
 
+            restoreEnvar("LC_ALL", lc_all)
+
             return
 
         with Popen(
@@ -231,10 +236,13 @@ class BaseHandler(ABC):
             _stdout: IO[str] | None = p.stdout
 
             if not _stdout:
+                restoreEnvar("LC_ALL", lc_all)
+
                 return
 
-            for l in _stdout:
-                _print(l, end = "")
+            for l in _stdout: _print(l, end = "")
+
+            restoreEnvar("LC_ALL", lc_all)
 
 
     def runExe(
