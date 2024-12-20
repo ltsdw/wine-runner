@@ -9,7 +9,7 @@ def createHandler(
         application_directory: str,
         executables_aliases: Dict[str, str],
         wine_directory: str | None = None,
-        umu_run_path: str | None = None,
+        umu_directory: str | None = None,
         proton_directory: str | None = None,
         environment_variables: Dict[str, str] | None = None,
         debug: bool = False,
@@ -27,7 +27,7 @@ def createHandler(
     :application_directory: Path to the directory where the application's prefix will be created.
     :executables_aliases: Dictionary of format { "executable_aliase" : "/path/to/the/exectuable" }.
     :wine_directory: Path to the wine's bin directory.
-    :umu_run_path: Path to umu directory.
+    :umu_directory: Path to umu directory.
     :proton_directory: Path to proton's directory which will be used by umu.
     :environment_variables: The environment variables to be used within wine's environment.
     :debug: Tell whether should display logs.
@@ -39,10 +39,10 @@ def createHandler(
     :return: A handler of type UMUHandler or WineHandler.
     """
 
-    if default_runner == "umu" and umu_run_path and proton_directory:
+    if default_runner == "umu":
         return UMUHandler(
             profile_id,
-            umu_run_path,
+            umu_directory,
             proton_directory,
             application_directory,
             executables_aliases,
@@ -51,7 +51,7 @@ def createHandler(
             debug_filepath
         )
 
-    if default_runner == "wine" and wine_directory:
+    if default_runner == "wine":
         return WineHandler(
             profile_id,
             wine_directory,

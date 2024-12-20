@@ -78,7 +78,7 @@ class Parser(Repair):
             if profile_id == "example_configuration_file" or profile_id != profile_id_arg: continue
 
             wine_directory: str | None = self._parseValue(app_data, "wine_directory", str)
-            umu_run_path: str | None = self._parseValue(app_data, "umu_run_path", str)
+            umu_directory: str | None = self._parseValue(app_data, "umu_directory", str)
             proton_directory: str | None = self._parseValue(app_data, "proton_directory", str)
 
             default_runner_cfg: str | None = self._parseValue(app_data, "default_runner", str)
@@ -108,7 +108,7 @@ class Parser(Repair):
                 application_directory,  # pyright: ignore[reportArgumentType]
                 executables_aliases,    # pyright: ignore[reportArgumentType]
                 wine_directory,
-                umu_run_path,
+                umu_directory,
                 proton_directory,
                 environment_variables,
                 debug,                  # pyright: ignore[reportArgumentType]

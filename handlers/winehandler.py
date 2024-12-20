@@ -26,7 +26,7 @@ class WineHandler(BaseHandler):
     def __init__(
         self,
         profile_id: str,
-        wine_directory: str,
+        wine_directory: str | None,
         application_directory: str,
         executables_aliases: Dict[str, str],
         environment_variables: Dict[str, str] | None = None,
@@ -37,14 +37,11 @@ class WineHandler(BaseHandler):
         winetricks_path: str | None = None,
         gallium_nine_directory : str | None = None
     ):
+        self._wine_directory: str | None        = wine_directory
 
-        self._profile_id: str                   = profile_id
-        self._wine_directory: str               = wine_directory
-        self._wine32_bin_path: str              = path.join(self._wine_directory, "wine")
-        self._wine64_bin_path: str              = path.join(self._wine_directory, "wine64")
-        self._wineboot_bin_path: str            = path.join(self._wine_directory, "wineboot")
-        self._winecfg_bin_path: str             = path.join(self._wine_directory, "winecfg")
-        self._application_directory: str        = application_directory
+        if not self._wine_directory:
+            self._wine_directory = "/usr/bin"
+
         self._prefix: str                       = path.join(application_directory, "pfx")
         self._debug: bool                       = debug
         self._debug_filepath: str | None        = debug_filepath
@@ -56,20 +53,16 @@ class WineHandler(BaseHandler):
         self._syswow64_dir: str                 = path.join(self._prefix, "drive_c/windows/syswow64")
 
         super().__init__(
-            self._profile_id,
-            self._wine32_bin_path,
-            self._wine64_bin_path,
-            self._wineboot_bin_path,
-            self._winecfg_bin_path,
-            self._application_directory,
+            profile_id,
+            path.join(self._wine_directory, "wine"),
+            path.join(self._wine_directory, "wine64"),
+            application_directory,
             self.wine,
             executables_aliases,
             environment_variables,
             self._debug,
             self._debug_filepath
         )
-
-        self._default_wine_path: str = self.getDefaultWinePath()
 
 
     def wine(self, mode: str = "waitforexitandrun", args: List[str] | None = None) -> None:
@@ -84,7 +77,7 @@ class WineHandler(BaseHandler):
         _args: List[str] = args if args else ["--help"]
         _: str = mode
 
-        self.runCommand([self._default_wine_path, *_args], self._debug, self._debug_filepath)
+        self.runCommand([self.getDefaultWinePath(), *_args], self._debug, self._debug_filepath)
 
 
     def wineboot(self, args: List[str] | None = None) -> None:
@@ -98,7 +91,8 @@ class WineHandler(BaseHandler):
         """
 
         _args: List[str] = args if args else ["--help"]
-        self.runCommand([self._wineboot_bin_path, *_args], True)
+
+        self.runCommand([self.getDefaultWinePath(), "wineboot", *_args], True)
 
 
     def killAll(self) -> None:
@@ -110,7 +104,7 @@ class WineHandler(BaseHandler):
         :return:
         """
 
-        self.runCommand([self._wineboot_bin_path, "--kill"], True)
+        self.runCommand([self.getDefaultWinePath(), "wineboot", "--kill"], True)
 
 
     def initWinePrefix(self) -> None:
@@ -148,6 +142,7 @@ class WineHandler(BaseHandler):
 
         return downloader.extract()
 
+
     def installDXVK(self) -> None:
         """
         Install DXVK.
@@ -181,7 +176,7 @@ class WineHandler(BaseHandler):
 
         _print("Installing DXVK.")
 
-        status_code: int = self.runCommandStatusChecked([self._wine64_bin_path, "winepath"])
+        status_code: int = self.runCommandStatusChecked([self.getWine64Path(), "winepath"])
 
         if status_code != 0:
              for dll in dlls_x32:
@@ -297,7 +292,7 @@ class WineHandler(BaseHandler):
         if not self._dxvk_nvapi_directory or not path.exists(self._dxvk_nvapi_directory):
             die(f"DXVK directory not found at: {self._dxvk_nvapi_directory}.")
 
-        status_code: int = self.runCommandStatusChecked([self._wine64_bin_path, "winepath"])
+        status_code: int = self.runCommandStatusChecked([self.getWine64Path(), "winepath"])
         dxvk_dlls: List[str] = ["d3d10core.dll", "d3d11.dll", "d3d9.dll", "dxgi.dll"]
 
         if status_code != 0 and not all(path.exists(path.join(self._system32_dir, dll)) for dll in dxvk_dlls):
@@ -357,7 +352,7 @@ class WineHandler(BaseHandler):
         :return:
         """
 
-        status_code: int = self.runCommandStatusChecked([self._wine64_bin_path, "winepath"])
+        status_code: int = self.runCommandStatusChecked([self.getWine64Path(), "winepath"])
         system32_dll: str = path.join(self._system32_dir, "nvapi64.dll" if status_code == 0 else "nvapi.dll")
         syswow64_dll: str = path.join(self._syswow64_dir, "nvapi.dll")
 
@@ -406,7 +401,7 @@ class WineHandler(BaseHandler):
         if not all(path.exists(file) for file in [ninewinecfg_32, ninewinecfg_64, d3d9_32, d3d9_64]):
             die(f"Some or all Gallium Nine dlls are missing: {self._gallium_nine_directory}.")
 
-        status_code: int = self.runCommandStatusChecked([self._wine64_bin_path, "winepath"])
+        status_code: int = self.runCommandStatusChecked([self.getWine64Path(), "winepath"])
 
         _print("Installing Gallium Nine.")
 
@@ -415,7 +410,7 @@ class WineHandler(BaseHandler):
             copy(ninewinecfg_32, path.join(self._system32_dir, "ninewinecfg.exe"))
             _print(f"{d3d9_32} -> {self._system32_dir}")
             copy(d3d9_32, path.join(self._system32_dir, "d3d9-nine.dll"))
-            self.runCommand([self._wine32_bin_path, "ninewinecfg.exe", "-e"])
+            self.runCommand([self.getWinePath(), "ninewinecfg.exe", "-e"])
             _print("Gallium Nine installed.")
 
             return
@@ -429,7 +424,7 @@ class WineHandler(BaseHandler):
         copy(ninewinecfg_64, path.join(self._system32_dir, "ninewinecfg.exe"))
         _print(f"{d3d9_64} -> {self._system32_dir}")
         copy(d3d9_64, path.join(self._system32_dir, "d3d9-nine.dll"))
-        self.runCommand([self._wine64_bin_path, "ninewinecfg.exe", "-e"])
+        self.runCommand([self.getWine64Path(), "ninewinecfg.exe", "-e"])
 
         _print("Gallium Nine installed.")
 
@@ -441,7 +436,7 @@ class WineHandler(BaseHandler):
         :return:
         """
 
-        self.runCommand([self._default_wine_path, "ninewinecfg.exe", "-d"])
+        self.runCommand([self.getDefaultWinePath(), "ninewinecfg.exe", "-d"])
 
         files_to_rename: List[str] = [
             path.join(self._system32_dir, "d3d9-nine.bak"),
@@ -489,3 +484,59 @@ class WineHandler(BaseHandler):
 
         self.runCommand([self._winetricks_path, *args], self._debug, self._debug_filepath)
 
+
+    def getWinePath(self) -> str:
+        """
+        getWinePath
+
+        Gets the wine binary path.
+
+        :return: The path to the wine binary or throw in case it's not provided.
+        """
+
+        if not self._wine_bin_path:
+            raise TypeError(f"Wine binary path is empty.")
+
+        return self._wine_bin_path
+
+
+    def getWine64Path(self) -> str:
+        """
+        getWine64Path
+
+        Gets the wine64 binary path.
+
+        :return: The path to the wine64 binary or throw in case it's not provided.
+        """
+
+        if not self._wine64_bin_path:
+            raise TypeError(f"Wine64 binary path is empty.")
+
+        return self._wine64_bin_path
+
+
+    def getDefaultWinePath(self) -> str:
+        """
+        getDefaultWinePath
+
+        Gets the default default wine being used.
+
+        :return: The path to the default wine or None in case umu is being used.
+        """
+
+        if not self._default_wine_path:
+            raise TypeError(f"Wine binary path is empty.")
+
+        return self._default_wine_path
+
+
+    def winecfg(self) -> None:
+        """
+        winecfg
+
+        Runs wine configuration.
+
+        :return:
+        """
+
+        self.runCommand([self.getDefaultWinePath(), "winecfg"], self._debug, self._debug_filepath)

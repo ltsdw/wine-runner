@@ -1,6 +1,7 @@
 from abc import ABC
 from subprocess import Popen, PIPE, DEVNULL, STDOUT, run
 from shutil import rmtree
+from sys import stderr
 from os import environ, path, chdir, mkdir
 from typing import List, Dict, IO, Callable, Optional, NoReturn
 from utils.funcs import die, negate, _print, restoreEnvar
@@ -13,10 +14,8 @@ class BaseHandler(ABC):
     Abstract handler class.
 
     :profile_id: Application's profile id.
-    :wine32_bin_path: Path to wine 32 bits binary.
-    :wine64_bin_path: Path to wine 64 bits binary.
-    :wineboot_bin_path: Path to wineboot.
-    :winecfg_bin_path: Path to winecfg.
+    :wine_bin_path: Path to wine binary.
+    :wine64_bin_path: Path to wine64 binary.
     :proton_directory: Path to proton's directory which will be used by umu.
     :application_directory: Path to the directory where the application's prefix will be created.
     :executables_aliases: Dictionary of format { "executable_aliase" : "/path/to/the/exectuable" }.
@@ -28,10 +27,8 @@ class BaseHandler(ABC):
     def __init__(
         self,
         profile_id: str,
-        wine32_bin_path: str,
-        wine64_bin_path: str,
-        wineboot_bin_path: str,
-        winecfg_bin_path: str,
+        wine_bin_path: str | None,
+        wine64_bin_path: str | None,
         application_directory: str,
         runner: Callable[[str, Optional[List[str]]], None],
         executables_aliases: Dict[str, str],
@@ -40,10 +37,8 @@ class BaseHandler(ABC):
         debug_filepath: str | None = None
     ):
         self._profile_id: str                                   = profile_id
-        self._wine32_bin_path: str                              = wine32_bin_path
-        self._wine64_bin_path: str                              = wine64_bin_path
-        self._wineboot_bin_path: str                            = wineboot_bin_path
-        self._winecfg_bin_path: str                             = winecfg_bin_path
+        self._wine_bin_path: str | None                         = wine_bin_path
+        self._wine64_bin_path: str | None                       = wine64_bin_path
         self._application_directory: str                        = application_directory
         self._runner: Callable[[str, Optional[List[str]]], None]= runner
         self._executables_aliases: Dict[str, str]               = executables_aliases
@@ -51,39 +46,42 @@ class BaseHandler(ABC):
         self._debug: bool                                       = debug
         self._debug_filepath: str | None                        = debug_filepath
 
-        if self.runCommandStatusChecked([self._wine32_bin_path, "--version"]) != 0:
-            self._wine32_bin_path = "/usr/bin/wine"
+        if self._wine_bin_path and not path.exists(self._wine_bin_path):
+            _print(f"Wine binary not found at: {self._wine_bin_path}", stderr)
+
+            self._wine_bin_path = "/usr/bin/wine"
             self._wine64_bin_path = "/usr/bin/wine64"
-            self._wineboot_bin_path = "/usr/bin/wineboot"
-            self._winecfg_bin_path = "/usr/bin/winecfg"
 
-        if self.runCommandStatusChecked([self._wine32_bin_path, "--version"]) != 0:
-            die(f"Wine not found at: {self._wine32_bin_path}.")
+            _print(f"Defaulting to system's wine: {self._wine_bin_path}", stderr)
 
-        if not path.exists(self._wineboot_bin_path):
-            die(f"wineboot not found at: {self._wineboot_bin_path}")
+        if self._wine_bin_path:
+            status_code: int = self.runCommandStatusChecked([self._wine_bin_path, "--version"]) \
+                               if path.exists(self._wine_bin_path) else -1
 
-        if not path.exists(self._winecfg_bin_path):
-            die(f"winecfg not found at: {self._winecfg_bin_path}")
+            if status_code != 0:
+                die(f"Wine binary not found at: {self._wine_bin_path}. Exiting...")
+
+            environ["PATH"] += ":" + path.dirname(self._wine_bin_path)
 
         environ["WINEPREFIX"] = self._prefix
-
-        environ["PATH"] += ":" + path.dirname(self._wine64_bin_path)
 
         if environment_variables: self._setEnvironmentVariables(environment_variables)
 
         self._keepConsistentSyncMethod()
 
-        if path.exists(self._prefix):
+        if path.exists(self._prefix) and self._wine_bin_path and self._wine64_bin_path:
             if self.runCommandStatusChecked([self._wine64_bin_path, "winepath"]) == 0:
                 environ["WINE"] = self._wine64_bin_path
-            elif self.runCommandStatusChecked([self._wine32_bin_path, "winepath"]) == 0:
-                environ["WINE"] = self._wine32_bin_path
+            elif self.runCommandStatusChecked([self._wine_bin_path, "winepath"]) == 0:
+                environ["WINE"] = self._wine_bin_path
             else:
                 die(f"Failed to check if the prefix {self._prefix} is 32 or 64 bits.")
 
-        _wine: str | None = environ.get("WINE")
-        self._default_wine_path: str = _wine if _wine else self._wine64_bin_path
+        default_wine_path: str | None = environ.get("WINE")
+
+        self._default_wine_path: str | None = default_wine_path if default_wine_path \
+                                                                else self._wine64_bin_path if self._wine64_bin_path \
+                                                                else self._wine_bin_path
 
 
     @staticmethod
@@ -460,7 +458,7 @@ class BaseHandler(ABC):
         :return:
         """
 
-        self.runCommand([self._winecfg_bin_path], self._debug, self._debug_filepath)
+        raise NotImplementedError(f"Method {self.winecfg.__name__} not implemented.")
 
 
     def getProfileId(self) -> str:
@@ -492,14 +490,38 @@ class BaseHandler(ABC):
         _print(f"Removed prefix: {self._prefix}.")
 
 
+    def getWinePath(self) -> str:
+        """
+        getWinePath
+
+        Gets the wine binary path.
+
+        :return: The path to the wine binary or throw in case it's not provided.
+        """
+
+        raise NotImplementedError(f"Method {self.getWinePath.__name__} not implemented.")
+
+
+    def getWine64Path(self) -> str:
+        """
+        getWine64Path
+
+        Gets the wine64 binary path.
+
+        :return: The path to the wine64 binary or throw in case it's not provided.
+        """
+
+        raise NotImplementedError(f"Method {self.getWine64Path.__name__} not implemented.")
+
+
     def getDefaultWinePath(self) -> str:
         """
         getDefaultWinePath
 
         Gets the default default wine being used.
 
-        :return: The path to the default wine.
+        :return: The path to the default wine binary or throw in case it's not provided.
         """
 
-        return self._default_wine_path
+        raise NotImplementedError(f"Method {self.getDefaultWinePath.__name__} not implemented.")
 

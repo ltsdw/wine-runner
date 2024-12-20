@@ -57,10 +57,9 @@ DXVK_STATE_CACHE_PATH = "$HOME/path/to/dxvk/state/pipeline/cache"
 mesa_glthread = false
 DXVK_HUD = 0
 PROTON_USE_WINED3D_THREAD = false
-PROTONPATH = "$HOME/.steam/steam/compatibilitytools.d/GE-Proton8-28"
 GAMEID = "umu-unkown"
-PROTON_NO_ESYNC = 1
-STEAM_LINUX_RUNTIME_VERBOSE = 1
+PROTON_NO_ESYNC = 0
+STEAM_LINUX_RUNTIME_VERBOSE = 0
 
 # (Required)
 # At least one executable aliases must be provided.

@@ -1,4 +1,5 @@
 from os import environ, path, mkdir
+from sys import stderr
 from typing import List, Dict
 from utils.funcs import die, _print
 from handlers import BaseHandler
@@ -9,7 +10,7 @@ class UMUHandler(BaseHandler):
     UMUHelper
 
     :profile_id: Application's profile id.
-    :umu_run_path: Path to umu directory.
+    :umu_directory: Path to umu directory.
     :proton_directory: Path to proton's directory which will be used by umu.
     :application_directory: Path to the directory where the application's prefix will be created.
     :executables_aliases: Dictionary of format { "executable_aliase" : "/path/to/the/exectuable" }.
@@ -21,32 +22,33 @@ class UMUHandler(BaseHandler):
     def __init__(
         self,
         profile_id: str,
-        umu_run_path: str,
-        proton_directory: str,
+        umu_directory: str | None,
+        proton_directory: str | None,
         application_directory: str,
         executables_aliases: Dict[str, str],
         environment_variables: Dict[str, str] | None = None,
         debug: bool = False,
         debug_filepath: str | None = None
     ):
+        self._umu_directory: str
 
-        self._profile_id: str           = profile_id
-        self._umu_run_path: str         = umu_run_path
-        self._proton_directory: str     = proton_directory
-        self._wine32_bin_path: str        = path.join(self._proton_directory, "files/bin/wine")
-        self._wine64_bin_path: str        = path.join(self._proton_directory, "files/bin/wine64")
-        self._wine_lib_dir: str         = path.join(self._proton_directory, "files/lib")
-        self._wine_lib64_dir: str       = path.join(self._proton_directory, "files/lib64")
-        self._wineboot_bin_path: str    = path.join(self._wine_lib64_dir, "wine/x86_64-windows/wineboot.exe")
-        self._winecfg_bin_path: str     = path.join(self._wine_lib64_dir, "wine/x86_64-windows/winecfg.exe")
-        self._application_directory: str= application_directory
-        self._debug: bool               = debug
-        self._debug_filepath: str | None= debug_filepath
+        if not umu_directory or (umu_directory and not path.exists(umu_directory)):
+            self._umu_directory = "/usr/bin"
+
+            _print(f"umu-run not found at: {umu_directory}\n"
+                   f"Defaulting to system's umu-run directory at: {self._umu_directory}", stderr)
+        else:
+            self._umu_directory = umu_directory
+
+        self._profile_id: str               = profile_id
+        self._umu_run_path: str             = path.join(self._umu_directory, "umu-run")
+        self._proton_directory: str | None  = proton_directory
+
+        self._application_directory: str    = application_directory
+        self._debug: bool                   = debug
+        self._debug_filepath: str | None    = debug_filepath
 
         exit_code: int = self.runCommandStatusChecked([self._umu_run_path, "--help"])
-
-        if exit_code != 0:
-            self._umu_run_path = "/usr/bin/umu-run"
 
         if exit_code != 0 and self.runCommandStatusChecked([self._umu_run_path, "--help"]) != 0:
             die(f"umu-run not found at: {self._umu_run_path}")
@@ -54,18 +56,23 @@ class UMUHandler(BaseHandler):
         if not path.isfile(self._umu_run_path):
             die(f"umu-run path isn't a file: {self._umu_run_path}")
 
-        if not path.exists(self._proton_directory):
-            die(f"Proton directory does not exist at: {self._proton_directory}")
+        if self._proton_directory and path.exists(self._proton_directory):
+            proton_path: str = path.join(self._proton_directory, "proton")
+
+            if path.exists(proton_path):
+                environ["PROTONPATH"] = self._proton_directory
+            else:
+                _print(
+                    f"Proton wasn't found at the directory: {self._proton_directory}\n"
+                    f"Defaulting to UMU's proton path.", stderr
+                )
 
         environ["PATH"] += ":" + path.dirname(self._umu_run_path)
-        environ["PATH"] += ":" + self._proton_directory
 
         super().__init__(
             self._profile_id,
-            self._wine32_bin_path,
-            self._wine64_bin_path,
-            self._wineboot_bin_path,
-            self._winecfg_bin_path,
+            None, # No need to specify wine path
+            None, # No need for specify wine64 path
             self._application_directory,
             self.umuRun,
             executables_aliases,
@@ -103,7 +110,7 @@ class UMUHandler(BaseHandler):
 
         _args: List[str] = args if args else ["--help"]
 
-        self.runCommand([self._umu_run_path, "runinprefix", "wineboot", *_args], True)
+        self.runCommand([self._umu_run_path, "run", "wineboot", *_args], True)
 
 
     def initWinePrefix(self) -> None:
@@ -130,7 +137,7 @@ class UMUHandler(BaseHandler):
         :return:
         """
 
-        self.runCommand([self._umu_run_path, "runinprefix", "winecfg"], self._debug, self._debug_filepath)
+        self.runCommand([self._umu_run_path, "run", "winecfg"], self._debug, self._debug_filepath)
 
 
     def killAll(self) -> None:
