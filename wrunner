@@ -3,5 +3,8 @@
 from utils import ProfilesManager
 
 if __name__ == "__main__":
-    ProfilesManager()
+    try:
+        ProfilesManager()
+    except KeyboardInterrupt:
+        exit(-1)
 
