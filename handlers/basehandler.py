@@ -322,8 +322,7 @@ class BaseHandler(ABC):
             mkdir(self._application_directory)
 
         self.wineboot(["--init"])
-
-        _print("Prefix creted.")
+        _print("Prefix created.")
 
 
     def reg(self, dll_name: str, action: str, data: str | None = None) -> None | NoReturn:

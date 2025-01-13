@@ -107,23 +107,6 @@ class WineHandler(BaseHandler):
         self.runCommand([self.getDefaultWinePath(), "wineboot", "--kill"], True)
 
 
-    def initWinePrefix(self) -> None:
-        """
-        Setups a new prefix.
-
-        :return:
-        """
-
-        _print("Initiating prefix.")
-
-        if not path.exists(self._application_directory):
-            mkdir(self._application_directory)
-
-        self.wineboot(["--init"])
-
-        _print("Prefix creted.")
-
-
     @staticmethod
     def _download(url: str, directory: str) -> str:
         """

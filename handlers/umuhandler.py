@@ -113,23 +113,6 @@ class UMUHandler(BaseHandler):
         self.runCommand([self._umu_run_path, "run", "wineboot", *_args], True)
 
 
-    def initWinePrefix(self) -> None:
-        """
-        Setups a new prefix.
-
-        :return:
-        """
-
-        _print("Initiating prefix.")
-
-        if not path.exists(self._application_directory):
-            mkdir(self._application_directory)
-
-        self.wineboot(["--init"])
-
-        _print("Prefix creted.")
-
-
     def winecfg(self) -> None:
         """
         Runs wine configuration.
